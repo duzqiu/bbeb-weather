@@ -1,0 +1,41 @@
+<!--pages/mine/mine.wxml-->
+<view class="page">
+  <view class="card">
+    <view class="row">
+      <text class="label">微信版本</text>
+      <text class="value">{{wxVersion}}</text>
+    </view>
+
+    <view class="row">
+      <text class="label">缓存占用</text>
+      <text class="value">{{cacheSize}}</text>
+    </view>
+
+    <view class="row" bindtap="onClearCache">
+      <text class="label">清除缓存</text>
+      <text class="arrow">›</text>
+    </view>
+
+    <view class="row row-last">
+      <text class="label">小程序版本</text>
+      <text class="value">v{{appVersion}}</text>
+    </view>
+  </view>
+
+  <view class="card card-second">
+    <view class="row" bindtap="onPrivacy">
+      <text class="label">隐私说明</text>
+      <text class="arrow">›</text>
+    </view>
+
+    <view class="row" bindtap="onDataSource">
+      <text class="label">数据来源</text>
+      <text class="arrow">›</text>
+    </view>
+
+    <view class="row row-last" bindtap="onFeedback">
+      <text class="label">意见反馈</text>
+      <text class="arrow">›</text>
+    </view>
+  </view>
+</view>

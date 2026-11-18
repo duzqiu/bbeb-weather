@@ -1,0 +1,14 @@
+/**app.wxss**/
+page {
+  background-color: #f5f6f8;
+  color: rgba(0, 0, 0, 0.9);
+  font-size: 28rpx;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+view,
+text {
+  box-sizing: border-box;
+  word-break: break-word;
+}

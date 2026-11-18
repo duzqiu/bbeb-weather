@@ -1,0 +1,19 @@
+{
+  "name": "bbeb-weather",
+  "version": "0.0.1",
+  "description": "灞波儿奔天气 · 微信多端框架（Donut）项目，一套代码运行于小程序 / Android / iOS",
+  "private": true,
+  "scripts": {
+  },
+  "keywords": [
+    "miniprogram",
+    "donut",
+    "multi-platform"
+  ],
+  "author": "",
+  "license": "UNLICENSED",
+  "dependencies": {
+  },
+  "devDependencies": {
+  }
+}

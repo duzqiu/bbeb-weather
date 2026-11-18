@@ -1,0 +1,123 @@
+<!--pages/index/index.wxml-->
+<view class="page">
+  <!-- 骨架屏 -->
+  <block wx:if="{{loading}}">
+    <view class="sk-card">
+      <view class="sk sk-bar" style="width: 35%;"></view>
+      <view class="sk sk-temp"></view>
+      <view class="sk sk-bar" style="width: 55%; margin-top: 26rpx;"></view>
+    </view>
+
+    <view class="sk-card sk-row">
+      <view class="sk-col">
+        <view class="sk sk-bar" style="width: 55%;"></view>
+        <view class="sk sk-bar sk-thin" style="width: 80%;"></view>
+      </view>
+      <view class="sk-col">
+        <view class="sk sk-bar" style="width: 55%;"></view>
+        <view class="sk sk-bar sk-thin" style="width: 80%;"></view>
+      </view>
+      <view class="sk-col">
+        <view class="sk sk-bar" style="width: 55%;"></view>
+        <view class="sk sk-bar sk-thin" style="width: 80%;"></view>
+      </view>
+    </view>
+
+    <view class="sk-card sk-block"></view>
+    <view class="sk-card sk-block"></view>
+    <view class="sk-card sk-block sk-short"></view>
+  </block>
+
+  <block wx:else>
+    <!-- 今日天气（地点在卡片内） -->
+    <view class="hero">
+      <view class="hero-top" bindtap="onLocateTap">
+        <view class="hero-location">
+          <text class="hero-place {{locating ? 'is-busy' : ''}}">{{place}}</text>
+          <view class="location-action">
+            <view wx:if="{{locating}}" class="spinner"></view>
+            <text class="action-text">{{locating ? '定位中' : '重新定位'}}</text>
+          </view>
+        </view>
+        <text class="updated">{{updatedAt}}更新</text>
+      </view>
+      <text class="location-hint" wx:if="{{hint}}">{{hint}}</text>
+
+      <view class="hero-main">
+        <text class="temp">{{temp}}°</text>
+        <view class="hero-right">
+          <text class="hero-icon">{{icon}}</text>
+          <text class="hero-desc">{{desc}}</text>
+        </view>
+      </view>
+
+      <view class="hero-bottom">
+        <text class="hero-range">最高 {{high}}° · 最低 {{low}}°</text>
+        <text class="hero-feel">体感 {{feel}}°</text>
+      </view>
+    </view>
+
+    <!-- 指标 -->
+    <view class="metrics">
+      <view class="metric">
+        <text class="metric-value">{{aqi}}</text>
+        <text class="metric-label">空气质量·{{aqiText}}</text>
+      </view>
+      <view class="metric">
+        <text class="metric-value">{{humidity}}%</text>
+        <text class="metric-label">湿度</text>
+      </view>
+      <view class="metric">
+        <text class="metric-value">{{wind}}</text>
+        <text class="metric-label">东南风</text>
+      </view>
+    </view>
+
+    <!-- 24 小时 -->
+    <view class="section">
+      <text class="section-title">24 小时预报</text>
+      <scroll-view class="hourly" scroll-x enable-flex show-scrollbar="{{false}}">
+        <view class="hour" wx:for="{{hourly}}" wx:key="time">
+          <text class="hour-time">{{item.time}}</text>
+          <text class="hour-icon">{{item.icon}}</text>
+          <text class="hour-temp">{{item.temp}}°</text>
+        </view>
+      </scroll-view>
+    </view>
+
+    <!-- 7 天 -->
+    <view class="section">
+      <text class="section-title">未来 7 天</text>
+      <view class="daily">
+        <view class="day" wx:for="{{daily}}" wx:key="day">
+          <text class="day-name">{{item.day}}</text>
+          <text class="day-icon">{{item.icon}}</text>
+          <text class="day-desc">{{item.desc}}</text>
+          <view class="bar">
+            <view class="bar-track">
+              <view class="bar-range" style="left: {{item.barLeft}}%; width: {{item.barWidth}}%;"></view>
+            </view>
+          </view>
+          <text class="day-temp">{{item.low}}° / {{item.high}}°</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 天气指数 -->
+    <view class="section">
+      <text class="section-title">天气指数</text>
+      <view class="index-grid">
+        <view class="index-card" wx:for="{{indices}}" wx:key="name">
+          <view class="index-head">
+            <text class="index-icon">{{item.icon}}</text>
+            <text class="index-name">{{item.name}}</text>
+          </view>
+          <text class="index-value">{{item.value}}</text>
+          <text class="index-tip">{{item.tip}}</text>
+        </view>
+      </view>
+    </view>
+  </block>
+
+  <text class="data-note">{{notice}}</text>
+</view>
