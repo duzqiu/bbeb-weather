@@ -47,6 +47,7 @@ interface CachedLocation {
 const LOCATION_KEY = 'weather_location'
 const CACHE_TTL = 12 * 60 * 60 * 1000 // 12 小时内不重复请求
 const WEATHER_KEY = 'weather_snapshot'
+const WEATHER_CACHE_VERSION = 4 // 图标/字段结构变化时 +1，旧缓存自动失效
 const WEATHER_TTL = 10 * 60 * 1000 // 天气数据 10 分钟内复用
 
 const HOURLY: Hourly[] = [
@@ -87,6 +88,33 @@ const DAILY = DAILY_RAW.map((d) => ({
   barWidth: Math.max(6, Math.round(((d.high - d.low) / SPAN) * 100)),
 }))
 
+/** 空气质量图标随等级变化，避免"优"配口罩这类违和组合 */
+function aqiIconOf(category: string): string {
+  if (category.indexOf('严重') >= 0) return '😭'
+  if (category.indexOf('重度') >= 0) return '😢'
+  if (category.indexOf('中度') >= 0) return '🤢'
+  if (category.indexOf('轻度') >= 0) return '😷'
+  if (category.indexOf('良') >= 0) return '🙂'
+  return '😀'
+}
+
+/** 风力等级 → 中文描述（0~12 级） */
+function windLevelName(scale: string): string {
+  if (!scale) return ''
+  const names = [
+    '无风', '软风', '轻风', '微风', '和风', '清劲风', '强风',
+    '疾风', '大风', '烈风', '狂风', '暴风', '飓风',
+  ]
+  const value = Math.max(0, Math.min(Number(scale) || 0, names.length - 1))
+  return names[value]
+}
+
+/** 和风的 updateTime 形如 2026-11-19T16:35+08:00，取 HH:mm 展示 */
+function updateTimeOf(iso: string): string {
+  const matched = /T(\d{2}):(\d{2})/.exec(iso || '')
+  return matched ?  : ''
+}
+
 /** 从「浙江省杭州市西湖区文三路 100 号」这类地址里提取区县 */
 function extractDistrict(address: string): string {
   const matched = address.match(/[\u4e00-\u9fa5]{2,8}(?:区|县|旗)/g)
@@ -117,9 +145,10 @@ Page({
     feel: 27,
     aqi: '32',
     aqiText: '优',
-    humidity: 58,
-    wind: '3 级',
-    updatedAt: '刚刚',
+    aqiIcon: '😀',
+    windDir: '东南风',
+    windLevel: '微风 · 3 级',
+    updatedAt: '--',
     notice: '数据加载中…',
     loading: true,
 
@@ -357,16 +386,19 @@ Page({
       desc: payload.now.text,
       icon: payload.now.icon,
       feel: payload.now.feels,
-      humidity: payload.now.humidity,
       aqi: String(payload.air.aqi || '--'),
       aqiText: payload.air.category || '--',
-      wind: payload.now.windScale ? `${payload.now.windScale} 级` : '--',
+      aqiIcon: aqiIconOf(payload.air.category || ''),
+      windDir: payload.now.windDir || '--',
+      windLevel: payload.now.windScale
+        ? `${windLevelName(payload.now.windScale)} · ${payload.now.windScale} 级`
+        : '--',
       high: payload.today.high,
       low: payload.today.low,
       hourly: payload.hourly,
       daily,
       indices: payload.indices.length ? payload.indices : INDICES,
-      updatedAt: '刚刚',
+      updatedAt: '--',
       loading: false,
       notice: '数据来源：和风天气',
     })
@@ -374,9 +406,9 @@ Page({
 
   readWeatherCache(): WeatherPayload | null {
     const raw = wx.getStorageSync(WEATHER_KEY) as unknown as
-      | { ts: number; payload: WeatherPayload }
+      | { ts: number; version: number; payload: WeatherPayload }
       | null
-    if (!raw || !raw.payload) {
+    if (!raw || !raw.payload || raw.version !== WEATHER_CACHE_VERSION) {
       return null
     }
     if (Date.now() - (raw.ts || 0) > WEATHER_TTL) {
@@ -386,7 +418,11 @@ Page({
   },
 
   writeWeatherCache(payload: WeatherPayload) {
-    wx.setStorageSync(WEATHER_KEY, { ts: Date.now(), payload })
+    wx.setStorageSync(WEATHER_KEY, {
+      ts: Date.now(),
+      version: WEATHER_CACHE_VERSION,
+      payload,
+    })
   },
 
   readCache(): CachedLocation | null {

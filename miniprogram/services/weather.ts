@@ -11,6 +11,7 @@ export interface WeatherNow {
   humidity: number
   windDir: string
   windScale: string
+  windSpeed: string
 }
 
 export interface WeatherHour {
@@ -41,6 +42,7 @@ export interface WeatherPayload {
   daily: WeatherDay[]
   indices: WeatherIndex[]
   air: { aqi: number; category: string }
+  updateTime: string
 }
 
 interface QwResponse {
@@ -183,6 +185,7 @@ export function fetchWeather(longitude: number, latitude: number): Promise<Weath
         humidity: Math.round(Number(nowBlock.humidity) || 0),
         windDir: nowBlock.windDir || '',
         windScale: nowBlock.windScale || '',
+        windSpeed: nowBlock.windSpeed || '',
       },
       today: {
         low: daily.length ? daily[0].low : 0,
@@ -195,6 +198,7 @@ export function fetchWeather(longitude: number, latitude: number): Promise<Weath
         aqi: aqiValue,
         category: airBlock.category || aqiLevel(aqiValue),
       },
+      updateTime: nowRes.updateTime || '',
     }
   })
 }

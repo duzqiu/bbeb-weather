@@ -57,26 +57,27 @@
       </view>
     </view>
 
-    <!-- 指标 -->
-    <view class="metrics">
-      <view class="metric">
-        <text class="metric-value">{{aqi}}</text>
-        <text class="metric-label">空气质量·{{aqiText}}</text>
+    <!-- 空气质量 / 风向风速 -->
+    <view class="index-grid metric-grid">
+      <view class="index-card index-card-icon">
+        <text class="card-icon">{{aqiIcon}}</text>
+        <text class="index-name">空气质量</text>
+        <text class="index-value">{{aqi}} {{aqiText}}</text>
+        <text class="index-tip">实时空气质量指数</text>
       </view>
-      <view class="metric">
-        <text class="metric-value">{{humidity}}%</text>
-        <text class="metric-label">湿度</text>
-      </view>
-      <view class="metric">
-        <text class="metric-value">{{wind}}</text>
-        <text class="metric-label">东南风</text>
+
+      <view class="index-card index-card-icon">
+        <text class="card-icon">🧭</text>
+        <text class="index-name">风向风速</text>
+        <text class="index-value">{{windDir}}</text>
+        <text class="index-tip">{{windLevel}}</text>
       </view>
     </view>
 
     <!-- 24 小时 -->
     <view class="section">
       <text class="section-title">24 小时预报</text>
-      <scroll-view class="hourly" scroll-x enable-flex show-scrollbar="{{false}}">
+      <scroll-view class="hourly" scroll-x show-scrollbar="{{false}}">
         <view class="hour" wx:for="{{hourly}}" wx:key="time">
           <text class="hour-time">{{item.time}}</text>
           <text class="hour-icon">{{item.icon}}</text>
