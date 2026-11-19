@@ -39,7 +39,7 @@
             <text class="action-text">{{locating ? '定位中' : '重新定位'}}</text>
           </view>
         </view>
-        <text class="updated">{{updatedAt}}更新</text>
+        <text class="updated">{{updatedAt}} 更新</text>
       </view>
       <text class="location-hint" wx:if="{{hint}}">{{hint}}</text>
 

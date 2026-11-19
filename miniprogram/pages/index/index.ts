@@ -47,7 +47,7 @@ interface CachedLocation {
 const LOCATION_KEY = 'weather_location'
 const CACHE_TTL = 12 * 60 * 60 * 1000 // 12 小时内不重复请求
 const WEATHER_KEY = 'weather_snapshot'
-const WEATHER_CACHE_VERSION = 4 // 图标/字段结构变化时 +1，旧缓存自动失效
+const WEATHER_CACHE_VERSION = 5 // 图标/字段结构变化时 +1，旧缓存自动失效
 const WEATHER_TTL = 10 * 60 * 1000 // 天气数据 10 分钟内复用
 
 const HOURLY: Hourly[] = [
@@ -112,7 +112,7 @@ function windLevelName(scale: string): string {
 /** 和风的 updateTime 形如 2026-11-19T16:35+08:00，取 HH:mm 展示 */
 function updateTimeOf(iso: string): string {
   const matched = /T(\d{2}):(\d{2})/.exec(iso || '')
-  return matched ?  : ''
+  return matched ? `${matched[1]}:${matched[2]}` : ''
 }
 
 /** 从「浙江省杭州市西湖区文三路 100 号」这类地址里提取区县 */
@@ -398,7 +398,7 @@ Page({
       hourly: payload.hourly,
       daily,
       indices: payload.indices.length ? payload.indices : INDICES,
-      updatedAt: '--',
+      updatedAt: updateTimeOf(payload.updateTime) || '--',
       loading: false,
       notice: '数据来源：和风天气',
     })
