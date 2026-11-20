@@ -45,7 +45,7 @@ Page({
     wx.showModal({
       title: '数据来源',
       content:
-        '天气数据：和风天气\n地址解析：腾讯位置服务\n\n数据仅供参考，请以当地气象部门发布的官方信息为准。',
+        '天气数据：和风天气\n天气图标：QWeather Icons（CC BY 4.0）\n地址解析：腾讯位置服务\n\n数据仅供参考，请以当地气象部门发布的官方信息为准。',
       showCancel: false,
       confirmText: '知道了',
     })

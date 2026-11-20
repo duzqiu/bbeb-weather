@@ -33,6 +33,7 @@
     <view class="hero">
       <view class="hero-top" bindtap="onLocateTap">
         <view class="hero-location">
+          <image class="place-icon" src="/images/icons/location.svg" mode="aspectFit"></image>
           <text class="hero-place {{locating ? 'is-busy' : ''}}">{{place}}</text>
           <view class="location-action">
             <view wx:if="{{locating}}" class="spinner"></view>
@@ -46,41 +47,91 @@
       <view class="hero-main">
         <text class="temp">{{temp}}°</text>
         <view class="hero-right">
-          <text class="hero-icon">{{icon}}</text>
+          <image wx:if="{{image}}" class="hero-icon-img" src="{{image}}" mode="aspectFit"></image>
+          <text wx:else class="qi hero-icon" style="color: {{color}};">{{glyph}}</text>
           <text class="hero-desc">{{desc}}</text>
         </view>
       </view>
 
       <view class="hero-bottom">
-        <text class="hero-range">最高 {{high}}° · 最低 {{low}}°</text>
-        <text class="hero-feel">体感 {{feel}}°</text>
+        <view class="hero-range">
+          <image class="temp-icon temp-icon-hot" src="/images/icons/thermometer-hot.svg" mode="aspectFit"></image>
+          <text>最高 {{high}}° · </text>
+          <image class="temp-icon" src="/images/icons/thermometer.svg" mode="aspectFit"></image>
+          <text>最低 {{low}}°</text>
+        </view>
+        <view class="hero-feel">
+          <image class="temp-icon temp-icon-feel" src="/images/icons/temp-now.svg" mode="aspectFit"></image>
+          <text>体感 {{feel}}°</text>
+        </view>
       </view>
     </view>
 
     <!-- 空气质量 / 风向风速 -->
     <view class="index-grid metric-grid">
       <view class="index-card index-card-icon">
-        <text class="card-icon">{{aqiIcon}}</text>
+        <image wx:if="{{aqiImage}}" class="card-icon-img" src="{{aqiImage}}" mode="aspectFit"></image>
+        <text wx:else class="card-icon">{{aqiIcon}}</text>
         <text class="index-name">空气质量</text>
         <text class="index-value">{{aqi}} {{aqiText}}</text>
         <text class="index-tip">实时空气质量指数</text>
       </view>
 
       <view class="index-card index-card-icon">
-        <text class="card-icon">🧭</text>
+        <image class="card-icon-img" src="/images/weather/wind-compass.svg" mode="aspectFit"></image>
         <text class="index-name">风向风速</text>
         <text class="index-value">{{windDir}}</text>
         <text class="index-tip">{{windLevel}}</text>
       </view>
     </view>
+    <!-- 湿度 / 日出日落 -->
+    <view class="index-grid metric-grid">
+      <view class="index-card humidity-card">
+        <view class="humidity-water" style="height: {{humidity}}%;">
+          <view class="humidity-wave wave-a"></view>
+          <view class="humidity-wave wave-b"></view>
+        </view>
+        <view class="humidity-content">
+          <view class="humidity-left">
+            <text class="humidity-title">湿度</text>
+            <text class="humidity-value">{{humidity}}%</text>
+          </view>
+          <view class="humidity-right">
+            <view class="humidity-gauge">
+              <view class="humidity-arc" style="background: conic-gradient(from 226deg, #3cb4f0 0deg, #3cb4f0 {{gaugeDeg}}deg, rgba(0,0,0,0.10) {{gaugeDeg}}deg, rgba(0,0,0,0.10) 268deg, rgba(0,0,0,0) 268deg);"></view>
+              <view class="humidity-hole">
+                <image class="humidity-drop" src="/images/icons/humidity.svg" mode="aspectFit"></image>
+              </view>
+            </view>
+            <text class="humidity-gauge-label">{{humidityShort}}</text>
+          </view>
+        </view>
+      </view>
+
+      <view class="index-card sun-card">
+        <text class="index-name">日出日落</text>
+        <view class="sun-body">
+          <view class="sun-side">
+            <image class="sun-icon" src="/images/icons/sunrise.svg" mode="aspectFit"></image>
+            <text class="sun-time">{{sunrise}}</text>
+          </view>
+          <view class="sun-divider"></view>
+          <view class="sun-side">
+            <image class="sun-icon" src="/images/icons/sunset.svg" mode="aspectFit"></image>
+            <text class="sun-time">{{sunset}}</text>
+          </view>
+        </view>
+      </view>
+    </view>
 
     <!-- 24 小时 -->
     <view class="section">
-      <text class="section-title">24 小时预报</text>
+      <text class="section-title">24小时预报</text>
       <scroll-view class="hourly" scroll-x show-scrollbar="{{false}}">
         <view class="hour" wx:for="{{hourly}}" wx:key="time">
           <text class="hour-time">{{item.time}}</text>
-          <text class="hour-icon">{{item.icon}}</text>
+          <image wx:if="{{item.image}}" class="hour-icon-img" src="{{item.image}}" mode="aspectFit"></image>
+          <text wx:else class="qi hour-icon" style="color: {{item.color}};">{{item.glyph}}</text>
           <text class="hour-temp">{{item.temp}}°</text>
         </view>
       </scroll-view>
@@ -88,11 +139,15 @@
 
     <!-- 7 天 -->
     <view class="section">
-      <text class="section-title">未来 7 天</text>
+      <text class="section-title">7日预报</text>
       <view class="daily">
         <view class="day" wx:for="{{daily}}" wx:key="day">
-          <text class="day-name">{{item.day}}</text>
-          <text class="day-icon">{{item.icon}}</text>
+          <view class="day-date">
+            <text class="day-name">{{item.day}}</text>
+            <text class="day-sub">{{item.date}}</text>
+          </view>
+          <image wx:if="{{item.image}}" class="day-icon-img" src="{{item.image}}" mode="aspectFit"></image>
+          <text wx:else class="qi day-icon" style="color: {{item.color}};">{{item.glyph}}</text>
           <text class="day-desc">{{item.desc}}</text>
           <view class="bar">
             <view class="bar-track">
@@ -110,7 +165,8 @@
       <view class="index-grid">
         <view class="index-card" wx:for="{{indices}}" wx:key="name">
           <view class="index-head">
-            <text class="index-icon">{{item.icon}}</text>
+            <image wx:if="{{item.image}}" class="index-icon-img" src="{{item.image}}" mode="aspectFit"></image>
+            <text wx:else class="index-icon">{{item.icon}}</text>
             <text class="index-name">{{item.name}}</text>
           </view>
           <text class="index-value">{{item.value}}</text>

@@ -1,19 +1,36 @@
 // pages/index/index.ts
 import { QQ_MAP_KEY } from '../../config'
 import { fetchWeather, WeatherPayload } from '../../services/weather'
+import { glyphOf } from '../../libs/qweather-glyphs'
+import { iconColorOf, iconImageOf } from '../../services/weather'
 
-interface Hourly {
+interface HourlyRaw {
   time: string
-  icon: string
+  iconCode: string
   temp: number
 }
 
-interface Daily {
+interface Hourly extends HourlyRaw {
+  glyph: string
+  color: string
+  image?: string
+}
+
+interface DailyRaw {
   day: string
-  icon: string
+  date: string
+  iconCode: string
   desc: string
   low: number
   high: number
+}
+
+interface Daily extends DailyRaw {
+  glyph: string
+  color: string
+  image?: string
+  barLeft: number
+  barWidth: number
 }
 
 interface WeatherIndex {
@@ -36,6 +53,7 @@ interface GeocoderResponse {
 }
 
 interface CachedLocation {
+  province: string
   city: string
   district: string
   place: string
@@ -44,31 +62,40 @@ interface CachedLocation {
   ts: number
 }
 
-const LOCATION_KEY = 'weather_location'
+const LOCATION_KEY = 'weather_location_v2'
 const CACHE_TTL = 12 * 60 * 60 * 1000 // 12 小时内不重复请求
 const WEATHER_KEY = 'weather_snapshot'
-const WEATHER_CACHE_VERSION = 5 // 图标/字段结构变化时 +1，旧缓存自动失效
+const WEATHER_CACHE_VERSION = 13 // 图标/字段结构变化时 +1，旧缓存自动失效
 const WEATHER_TTL = 10 * 60 * 1000 // 天气数据 10 分钟内复用
 
-const HOURLY: Hourly[] = [
-  { time: '现在', icon: '☀️', temp: 26 },
-  { time: '14时', icon: '☀️', temp: 27 },
-  { time: '15时', icon: '☀️', temp: 28 },
-  { time: '16时', icon: '⛅', temp: 27 },
-  { time: '17时', icon: '⛅', temp: 25 },
-  { time: '18时', icon: '🌤', temp: 23 },
-  { time: '19时', icon: '☁️', temp: 22 },
-  { time: '20时', icon: '☁️', temp: 21 },
+const HOURLY_RAW: HourlyRaw[] = [
+  { time: '现在', iconCode: '100', temp: 26 },
+  { time: '14时', iconCode: '100', temp: 27 },
+  { time: '15时', iconCode: '100', temp: 28 },
+  { time: '16时', iconCode: '101', temp: 27 },
+  { time: '17时', iconCode: '101', temp: 25 },
+  { time: '18时', iconCode: '103', temp: 23 },
+  { time: '19时', iconCode: '150', temp: 22 },
+  { time: '20时', iconCode: '150', temp: 21 },
 ]
 
-const DAILY_RAW: Daily[] = [
-  { day: '今天', icon: '☀️', desc: '晴', low: 18, high: 27 },
-  { day: '明天', icon: '⛅', desc: '多云', low: 19, high: 28 },
-  { day: '周三', icon: '🌧', desc: '小雨', low: 21, high: 25 },
-  { day: '周四', icon: '🌧', desc: '中雨', low: 20, high: 24 },
-  { day: '周五', icon: '☁️', desc: '阴', low: 20, high: 23 },
-  { day: '周六', icon: '☀️', desc: '晴', low: 19, high: 26 },
-  { day: '周日', icon: '🌤', desc: '晴转多云', low: 22, high: 28 },
+/** 静态兜底数据用当天起算的日期 */
+/** 固定只显示「月-日」 */
+function demoDate(offset: number): string {
+  const date = new Date(Date.now() + offset * 24 * 60 * 60 * 1000)
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  return month + '-' + day
+}
+
+const DAILY_RAW: DailyRaw[] = [
+  { day: '今天', date: demoDate(0), iconCode: '100', desc: '晴', low: 18, high: 27 },
+  { day: '明天', date: demoDate(1), iconCode: '101', desc: '多云', low: 19, high: 28 },
+  { day: '周三', date: demoDate(2), iconCode: '305', desc: '小雨', low: 21, high: 25 },
+  { day: '周四', date: demoDate(3), iconCode: '306', desc: '中雨', low: 20, high: 24 },
+  { day: '周五', date: demoDate(4), iconCode: '104', desc: '阴', low: 20, high: 23 },
+  { day: '周六', date: demoDate(5), iconCode: '100', desc: '晴', low: 19, high: 26 },
+  { day: '周日', date: demoDate(6), iconCode: '103', desc: '晴转多云', low: 22, high: 28 },
 ]
 
 const INDICES: WeatherIndex[] = [
@@ -82,13 +109,84 @@ const LOW = Math.min(...DAILY_RAW.map((d) => d.low))
 const HIGH = Math.max(...DAILY_RAW.map((d) => d.high))
 const SPAN = HIGH - LOW || 1
 
-const DAILY = DAILY_RAW.map((d) => ({
+const HOURLY_VIEW: Hourly[] = HOURLY_RAW.map((h) => ({
+  ...h,
+  glyph: glyphOf(h.iconCode),
+  color: iconColorOf(h.iconCode),
+  image: iconImageOf(h.iconCode),
+}))
+
+const DAILY: Daily[] = DAILY_RAW.map((d) => ({
+  glyph: glyphOf(d.iconCode),
+  color: iconColorOf(d.iconCode),
+  image: iconImageOf(d.iconCode),
   ...d,
   barLeft: Math.round(((d.low - LOW) / SPAN) * 100),
   barWidth: Math.max(6, Math.round(((d.high - d.low) / SPAN) * 100)),
 }))
 
+/** 生活指数图标：命中就用彩色 SVG，否则回退 emoji */
+const INDEX_IMAGES: Array<[string, string]> = [
+  ['穿衣', '/images/indices/clothing.svg'],
+  ['洗车', '/images/indices/car-wash.svg'],
+  ['运动', '/images/indices/sport.svg'],
+  ['紫外', '/images/indices/uv.svg'],
+  ['防晒', '/images/indices/uv.svg'],
+]
+
+function indexImageOf(name: string): string {
+  const text = name || ''
+  for (let i = 0; i < INDEX_IMAGES.length; i += 1) {
+    if (text.indexOf(INDEX_IMAGES[i][0]) >= 0) {
+      return INDEX_IMAGES[i][1]
+    }
+  }
+  return ''
+}
+
+const INDICES_VIEW = INDICES.map((item) => ({
+  ...item,
+  image: indexImageOf(item.name),
+}))
+
 /** 空气质量图标随等级变化，避免"优"配口罩这类违和组合 */
+/** 空气质量图标：有彩色 SVG 用图，没有则回退 emoji */
+const AQI_IMAGES: Array<[string, string]> = [
+  ['严重', '/images/air/aqi-sad.svg'],
+  ['重度', '/images/air/aqi-sad.svg'],
+  ['中度', '/images/air/aqi-angry.svg'],
+  ['轻度', '/images/air/aqi-speechless.svg'],
+  ['良', '/images/air/aqi-smile.svg'],
+  ['优', '/images/air/aqi-happy.svg'],
+]
+
+function aqiImageOf(category: string): string {
+  for (let i = 0; i < AQI_IMAGES.length; i += 1) {
+    if (category.indexOf(AQI_IMAGES[i][0]) >= 0) {
+      return AQI_IMAGES[i][1]
+    }
+  }
+  return ''
+}
+
+/** 湿度等级文案 */
+function humidityLevelOf(value: number): string {
+  if (value < 20) return '干燥'
+  if (value < 40) return '偏干燥'
+  if (value < 70) return '舒适'
+  if (value < 85) return '偏潮湿'
+  return '潮湿'
+}
+
+/** 环形进度用的短文案 */
+function humidityShortOf(value: number): string {
+  if (value < 20) return '干燥'
+  if (value < 40) return '偏干'
+  if (value < 70) return '舒适'
+  if (value < 85) return '偏潮'
+  return '潮湿'
+}
+
 function aqiIconOf(category: string): string {
   if (category.indexOf('严重') >= 0) return '😭'
   if (category.indexOf('重度') >= 0) return '😢'
@@ -111,17 +209,49 @@ function windLevelName(scale: string): string {
 
 /** 和风的 updateTime 形如 2026-11-19T16:35+08:00，取 HH:mm 展示 */
 function updateTimeOf(iso: string): string {
-  const matched = /T(\d{2}):(\d{2})/.exec(iso || '')
-  return matched ? `${matched[1]}:${matched[2]}` : ''
+  const matched = /(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/.exec(iso || '')
+  if (!matched) {
+    return ''
+  }
+  const date = `${matched[1]}-${matched[2]}-${matched[3]}`
+  return `${date} ${matched[4]}:${matched[5]}`
 }
 
 /** 从「浙江省杭州市西湖区文三路 100 号」这类地址里提取区县 */
+/** 去掉「省 / 市 / 自治区 / 特别行政区」后缀 */
+function shortArea(name: string): string {
+  if (!name) return ''
+  return name
+    .replace(/(壮族|回族|维吾尔)?自治区$/, '')
+    .replace(/特别行政区$/, '')
+    .replace(/[省市]$/, '')
+}
+
+/** 拼出「省市区」显示名，去掉行政级别后缀，直辖市自动去重 */
+function buildPlaceName(province: string, city: string, district: string): string {
+  const p = shortArea(province)
+  const c = shortArea(city)
+  const parts: string[] = []
+  if (p && p !== c && c.indexOf(p) !== 0 && p.indexOf(c) !== 0) {
+    parts.push(p)
+  }
+  if (c) parts.push(c)
+  if (district) parts.push(district)
+  return parts.join(' ')
+}
+
 function extractDistrict(address: string): string {
   const matched = address.match(/[\u4e00-\u9fa5]{2,8}(?:区|县|旗)/g)
   return matched && matched.length ? matched[matched.length - 1] : ''
 }
 
 /** 提取城市名，如「杭州市」 */
+/** 提取省份，如「浙江省」「内蒙古自治区」 */
+function extractProvince(address: string): string {
+  const matched = address.match(/[一-龥]{2,8}?(?:省|自治区|特别行政区)/)
+  return matched ? matched[0] : ''
+}
+
 function extractCity(address: string): string {
   const matched = address.match(/[\u4e00-\u9fa5]{2,6}市/)
   return matched ? matched[0] : ''
@@ -129,16 +259,20 @@ function extractCity(address: string): string {
 
 Page({
   data: {
+    province: '浙江省',
     city: '杭州',
     district: '西湖区',
-    place: '杭州 · 西湖区',
+    place: '浙江 杭州 西湖区',
     locating: false,
     hint: '',
     lat: 0,
     lng: 0,
 
     temp: 26,
-    icon: '☀️',
+    iconCode: '100',
+    glyph: glyphOf('100'),
+    color: iconColorOf('100'),
+    image: '',
     desc: '晴',
     high: 27,
     low: 18,
@@ -146,15 +280,22 @@ Page({
     aqi: '32',
     aqiText: '优',
     aqiIcon: '😀',
+    aqiImage: '',
+    humidity: 58,
+    gaugeDeg: 155,
+    humidityText: '舒适',
+    humidityShort: '舒适',
+    sunrise: '06:20',
+    sunset: '17:40',
     windDir: '东南风',
     windLevel: '微风 · 3 级',
     updatedAt: '--',
     notice: '数据加载中…',
     loading: true,
 
-    hourly: HOURLY,
+    hourly: HOURLY_VIEW,
     daily: DAILY,
-    indices: INDICES,
+    indices: INDICES_VIEW,
   },
 
   onLoad() {
@@ -168,9 +309,10 @@ Page({
     const cached = this.readCache()
     if (cached) {
       this.setData({
+        province: cached.province || '',
         city: cached.city,
         district: cached.district,
-        place: cached.place,
+        place: buildPlaceName(cached.province || '', cached.city, cached.district),
         lat: cached.lat || 0,
         lng: cached.lng || 0,
         hint: '',
@@ -275,7 +417,8 @@ Page({
           component.city || component.province || this.data.city,
           component.district || '',
           latitude,
-          longitude
+          longitude,
+          component.province || ''
         )
         if (showFeedback) {
           wx.showToast({ title: '已定位', icon: 'none' })
@@ -312,7 +455,8 @@ Page({
           extractCity(res.address) || this.data.city,
           extractDistrict(res.address) || res.name,
           res.latitude,
-          res.longitude
+          res.longitude,
+          extractProvince(res.address)
         )
       },
     })
@@ -320,9 +464,16 @@ Page({
 
   /* ---------------- 状态与缓存 ---------------- */
 
-  setLocation(city: string, district: string, lat: number, lng: number) {
-    const place = district ? `${city} · ${district}` : city
+  setLocation(
+    city: string,
+    district: string,
+    lat: number,
+    lng: number,
+    province = ''
+  ) {
+    const place = buildPlaceName(province, city, district)
     this.setData({
+      province,
       city,
       district,
       place,
@@ -331,7 +482,7 @@ Page({
       locating: false,
       hint: '',
     })
-    this.writeCache({ city, district, place, lat, lng, ts: Date.now() })
+    this.writeCache({ province, city, district, place, lat, lng, ts: Date.now() })
     this.loadWeather()
   },
 
@@ -369,11 +520,24 @@ Page({
   },
 
   applyWeather(payload: WeatherPayload) {
+    const humidityValue = Math.min(100, Math.max(0, Number(payload.now.humidity) || 0))
     const lows = payload.daily.map((d) => d.low)
     const highs = payload.daily.map((d) => d.high)
     const weekLow = Math.min(...lows)
     const weekHigh = Math.max(...highs)
     const span = weekHigh - weekLow || 1
+
+    // 24 小时列表首格“现在”与卡片实况保持同一图标
+    const hourly = payload.hourly.map((h, index) => {
+      if (index !== 0) return h
+      return {
+        ...h,
+        iconCode: payload.now.iconCode,
+        glyph: payload.now.glyph,
+        color: payload.now.color,
+        image: payload.now.image,
+      }
+    })
 
     const daily = payload.daily.map((d) => ({
       ...d,
@@ -384,20 +548,33 @@ Page({
     this.setData({
       temp: payload.now.temp,
       desc: payload.now.text,
-      icon: payload.now.icon,
+      iconCode: payload.now.iconCode,
+      glyph: payload.now.glyph,
+      color: payload.now.color,
+      image: payload.now.image,
       feel: payload.now.feels,
       aqi: String(payload.air.aqi || '--'),
       aqiText: payload.air.category || '--',
       aqiIcon: aqiIconOf(payload.air.category || ''),
+      aqiImage: aqiImageOf(payload.air.category || ''),
+      humidity: humidityValue,
+      gaugeDeg: Math.round(humidityValue * 2.68),
+      humidityText: humidityLevelOf(humidityValue),
+      humidityShort: humidityShortOf(humidityValue),
+      sunrise: payload.sun.sunrise || '--',
+      sunset: payload.sun.sunset || '--',
       windDir: payload.now.windDir || '--',
       windLevel: payload.now.windScale
         ? `${windLevelName(payload.now.windScale)} · ${payload.now.windScale} 级`
         : '--',
       high: payload.today.high,
       low: payload.today.low,
-      hourly: payload.hourly,
+      hourly,
       daily,
-      indices: payload.indices.length ? payload.indices : INDICES,
+      indices: (payload.indices.length ? payload.indices : INDICES).map((item) => ({
+        ...item,
+        image: indexImageOf(item.name),
+      })),
       updatedAt: updateTimeOf(payload.updateTime) || '--',
       loading: false,
       notice: '数据来源：和风天气',

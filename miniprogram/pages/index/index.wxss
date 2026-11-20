@@ -4,7 +4,15 @@
   padding: 16rpx 32rpx 64rpx;
   display: flex;
   flex-direction: column;
-  background-color: #f5f6f8;
+  background-color: #eef4fb;
+  background-image: linear-gradient(
+    165deg,
+    #cfe2fb 0%,
+    #e8f2ff 36%,
+    #f7f0ea 72%,
+    #fcefe6 100%
+  );
+  background-attachment: fixed;
 }
 
 /* 卡片内的地点行 */
@@ -13,6 +21,13 @@
   display: flex;
   align-items: center;
   min-width: 0;
+}
+
+.place-icon {
+  width: 30rpx;
+  height: 30rpx;
+  margin-right: 8rpx;
+  flex-shrink: 0;
 }
 
 .hero-place {
@@ -76,11 +91,21 @@
   margin-top: 0;
   padding: 36rpx 36rpx 32rpx;
   border-radius: 32rpx;
-  background-color: rgba(255, 255, 255, 0.52);
-  -webkit-backdrop-filter: blur(30rpx);
-  backdrop-filter: blur(30rpx);
-  border: 1rpx solid rgba(255, 255, 255, 0.42);
-  box-shadow: 0 8rpx 40rpx rgba(0, 0, 0, 0.05);
+  background-color: rgba(255, 255, 255, 0.40);
+  background-image: linear-gradient(
+    140deg,
+    rgba(255, 255, 255, 0.62) 0%,
+    rgba(255, 255, 255, 0.16) 42%,
+    rgba(255, 255, 255, 0.08) 62%,
+    rgba(255, 255, 255, 0.46) 100%
+  );
+  -webkit-backdrop-filter: blur(48rpx) saturate(180%) brightness(1.06);
+  backdrop-filter: blur(48rpx) saturate(180%) brightness(1.06);
+  border: 1rpx solid rgba(255, 255, 255, 0.58);
+  box-shadow:
+    0 10rpx 40rpx rgba(23, 43, 77, 0.12),
+    0 1rpx 2rpx rgba(255, 255, 255, 0.65) inset,
+    0 -1rpx 2rpx rgba(255, 255, 255, 0.22) inset;
 }
 
 .hero-top {
@@ -90,7 +115,10 @@
 }
 
 .updated {
-  font-size: 22rpx;
+  flex-shrink: 0;
+  margin-left: 12rpx;
+  font-size: 21rpx;
+  white-space: nowrap;
   color: rgba(0, 0, 0, 0.35);
 }
 
@@ -100,6 +128,7 @@
   justify-content: space-between;
   margin-top: 20rpx;
 }
+
 
 .temp {
   font-size: 132rpx;
@@ -118,6 +147,7 @@
 .hero-icon {
   font-size: 64rpx;
   line-height: 1;
+  color: #2f6fd0;
 }
 
 .hero-desc {
@@ -135,10 +165,36 @@
   border-top: 1rpx solid rgba(0, 0, 0, 0.06);
 }
 
-.hero-range,
-.hero-feel {
+.hero-range {
+  display: flex;
+  align-items: center;
   font-size: 24rpx;
   color: rgba(0, 0, 0, 0.55);
+}
+
+.hero-feel {
+  display: flex;
+  align-items: center;
+  font-size: 24rpx;
+  color: rgba(0, 0, 0, 0.55);
+}
+
+.temp-icon-feel {
+  width: 24rpx;
+  height: 24rpx;
+  margin: 0 4rpx 0 0;
+}
+
+.temp-icon {
+  width: 26rpx;
+  height: 26rpx;
+  margin: 0 6rpx;
+  flex-shrink: 0;
+}
+
+.temp-icon-hot {
+  margin-left: 0;
+  margin-right: 4rpx;
 }
 
 /* 空气质量 / 风向风力：与天气指数卡片同款，仅多一个上间距 */
@@ -167,12 +223,22 @@
   box-sizing: border-box;
   height: 172rpx;
   padding: 12rpx 8rpx;
-  background-color: rgba(255, 255, 255, 0.52);
-  -webkit-backdrop-filter: blur(30rpx);
-  backdrop-filter: blur(30rpx);
-  border: 1rpx solid rgba(255, 255, 255, 0.42);
+  background-color: rgba(255, 255, 255, 0.40);
+  background-image: linear-gradient(
+    140deg,
+    rgba(255, 255, 255, 0.62) 0%,
+    rgba(255, 255, 255, 0.16) 42%,
+    rgba(255, 255, 255, 0.08) 62%,
+    rgba(255, 255, 255, 0.46) 100%
+  );
+  -webkit-backdrop-filter: blur(48rpx) saturate(180%) brightness(1.06);
+  backdrop-filter: blur(48rpx) saturate(180%) brightness(1.06);
+  border: 1rpx solid rgba(255, 255, 255, 0.58);
   border-radius: 28rpx;
-  box-shadow: 0 8rpx 40rpx rgba(0, 0, 0, 0.04);
+  box-shadow:
+    0 10rpx 40rpx rgba(23, 43, 77, 0.12),
+    0 1rpx 2rpx rgba(255, 255, 255, 0.65) inset,
+    0 -1rpx 2rpx rgba(255, 255, 255, 0.22) inset;
 }
 
 .hour {
@@ -194,6 +260,7 @@
   margin: 10rpx 0;
   font-size: 36rpx;
   line-height: 1;
+  color: rgba(0, 0, 0, 0.62);
 }
 
 .hour-temp {
@@ -205,12 +272,22 @@
 /* 7 天 */
 .daily {
   padding: 8rpx 28rpx;
-  background-color: rgba(255, 255, 255, 0.52);
-  -webkit-backdrop-filter: blur(30rpx);
-  backdrop-filter: blur(30rpx);
-  border: 1rpx solid rgba(255, 255, 255, 0.42);
+  background-color: rgba(255, 255, 255, 0.40);
+  background-image: linear-gradient(
+    140deg,
+    rgba(255, 255, 255, 0.62) 0%,
+    rgba(255, 255, 255, 0.16) 42%,
+    rgba(255, 255, 255, 0.08) 62%,
+    rgba(255, 255, 255, 0.46) 100%
+  );
+  -webkit-backdrop-filter: blur(48rpx) saturate(180%) brightness(1.06);
+  backdrop-filter: blur(48rpx) saturate(180%) brightness(1.06);
+  border: 1rpx solid rgba(255, 255, 255, 0.58);
   border-radius: 28rpx;
-  box-shadow: 0 8rpx 40rpx rgba(0, 0, 0, 0.04);
+  box-shadow:
+    0 10rpx 40rpx rgba(23, 43, 77, 0.12),
+    0 1rpx 2rpx rgba(255, 255, 255, 0.65) inset,
+    0 -1rpx 2rpx rgba(255, 255, 255, 0.22) inset;
 }
 
 .day {
@@ -224,27 +301,49 @@
   border-bottom: none;
 }
 
+.day-date {
+  display: flex;
+  align-items: flex-end;
+  flex-shrink: 0;
+  width: 116rpx;
+  margin-right: 20rpx;
+}
+
 .day-name {
-  width: 96rpx;
+  white-space: nowrap;
   font-size: 26rpx;
+  line-height: 1.2;
   color: rgba(0, 0, 0, 0.85);
 }
 
+.day-sub {
+  margin-left: 6rpx;
+  margin-bottom: 1rpx;
+  white-space: nowrap;
+  font-size: 18rpx;
+  line-height: 1.2;
+  color: rgba(0, 0, 0, 0.4);
+}
+
 .day-icon {
-  width: 56rpx;
+  width: 48rpx;
+  margin-right: 10rpx;
+  text-align: center;
   font-size: 30rpx;
   line-height: 1;
+  color: rgba(0, 0, 0, 0.62);
 }
 
 .day-desc {
-  width: 128rpx;
+  width: 92rpx;
+  margin-right: 8rpx;
   font-size: 24rpx;
   color: rgba(0, 0, 0, 0.5);
 }
 
 .bar {
   flex: 1;
-  padding: 0 16rpx;
+  margin-right: 12rpx;
 }
 
 .bar-track {
@@ -263,7 +362,7 @@
 }
 
 .day-temp {
-  width: 150rpx;
+  width: 112rpx;
   text-align: right;
   font-size: 24rpx;
   color: rgba(0, 0, 0, 0.6);
@@ -283,12 +382,22 @@
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
-  background-color: rgba(255, 255, 255, 0.52);
-  -webkit-backdrop-filter: blur(30rpx);
-  backdrop-filter: blur(30rpx);
-  border: 1rpx solid rgba(255, 255, 255, 0.42);
+  background-color: rgba(255, 255, 255, 0.40);
+  background-image: linear-gradient(
+    140deg,
+    rgba(255, 255, 255, 0.62) 0%,
+    rgba(255, 255, 255, 0.16) 42%,
+    rgba(255, 255, 255, 0.08) 62%,
+    rgba(255, 255, 255, 0.46) 100%
+  );
+  -webkit-backdrop-filter: blur(48rpx) saturate(180%) brightness(1.06);
+  backdrop-filter: blur(48rpx) saturate(180%) brightness(1.06);
+  border: 1rpx solid rgba(255, 255, 255, 0.58);
   border-radius: 24rpx;
-  box-shadow: 0 8rpx 40rpx rgba(0, 0, 0, 0.04);
+  box-shadow:
+    0 10rpx 40rpx rgba(23, 43, 77, 0.12),
+    0 1rpx 2rpx rgba(255, 255, 255, 0.65) inset,
+    0 -1rpx 2rpx rgba(255, 255, 255, 0.22) inset;
 }
 
 .index-head {
@@ -302,6 +411,16 @@
   font-size: 30rpx;
   line-height: 1;
 }
+
+.index-icon-img {
+  width: 40rpx;
+  height: 40rpx;
+  margin-right: 10rpx;
+  flex-shrink: 0;
+}
+
+
+
 
 .index-name {
   font-size: 23rpx;
@@ -332,12 +451,22 @@
 .sk-card {
   margin-bottom: 24rpx;
   padding: 36rpx;
-  background-color: rgba(255, 255, 255, 0.52);
-  -webkit-backdrop-filter: blur(30rpx);
-  backdrop-filter: blur(30rpx);
-  border: 1rpx solid rgba(255, 255, 255, 0.42);
+  background-color: rgba(255, 255, 255, 0.40);
+  background-image: linear-gradient(
+    140deg,
+    rgba(255, 255, 255, 0.62) 0%,
+    rgba(255, 255, 255, 0.16) 42%,
+    rgba(255, 255, 255, 0.08) 62%,
+    rgba(255, 255, 255, 0.46) 100%
+  );
+  -webkit-backdrop-filter: blur(48rpx) saturate(180%) brightness(1.06);
+  backdrop-filter: blur(48rpx) saturate(180%) brightness(1.06);
+  border: 1rpx solid rgba(255, 255, 255, 0.58);
   border-radius: 28rpx;
-  box-shadow: 0 8rpx 40rpx rgba(0, 0, 0, 0.04);
+  box-shadow:
+    0 10rpx 40rpx rgba(23, 43, 77, 0.12),
+    0 1rpx 2rpx rgba(255, 255, 255, 0.65) inset,
+    0 -1rpx 2rpx rgba(255, 255, 255, 0.22) inset;
 }
 
 .sk {
@@ -398,7 +527,7 @@
 /* 指标卡：大图标放右侧空白处 */
 .index-card-icon {
   position: relative;
-  min-height: 164rpx;
+  min-height: 176rpx;
 }
 
 .card-icon {
@@ -411,16 +540,227 @@
   opacity: 1;
 }
 
+.card-icon-img {
+  position: absolute;
+  top: 50%;
+  right: 10rpx;
+  transform: translateY(-50%);
+  width: 102rpx;
+  height: 102rpx;
+}
+
+
 .index-card-icon .index-name {
-  padding-right: 112rpx;
+  padding-right: 128rpx;
   font-size: 24rpx;
 }
 
 .index-card-icon .index-value {
   margin-top: 18rpx;
-  padding-right: 112rpx;
+  padding-right: 128rpx;
 }
+
 
 .index-card-icon .index-tip {
   margin-top: 14rpx;
+}
+
+/* 大雨等彩色 SVG 图标 */
+.hero-icon-img {
+  width: 76rpx;
+  height: 76rpx;
+}
+
+.hour-icon-img {
+  width: 40rpx;
+  height: 40rpx;
+  margin: 8rpx 0;
+}
+
+.day-icon-img {
+  width: 40rpx;
+  height: 40rpx;
+  margin-right: 10rpx;
+}
+
+.sun-card {
+  min-height: 218rpx;
+}
+
+.sun-body {
+  flex: 1;
+  display: flex;
+  align-items: stretch;
+  margin-top: 10rpx;
+}
+
+.sun-side {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6rpx 0;
+}
+
+.sun-divider {
+  width: 1rpx;
+  align-self: stretch;
+  background-color: rgba(0, 0, 0, 0.08);
+}
+
+.sun-icon {
+  width: 86rpx;
+  height: 86rpx;
+  flex-shrink: 0;
+}
+
+.sun-time {
+  font-size: 22rpx;
+  line-height: 1.2;
+  color: rgba(0, 0, 0, 0.62);
+}
+
+/* 湿度：水位浸满整卡 + 环形进度 */
+.humidity-card {
+  position: relative;
+  min-height: 206rpx;
+  overflow: hidden;
+}
+
+.humidity-water {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  overflow: hidden;
+  background-image: linear-gradient(
+    180deg,
+    rgba(163, 216, 242, 0.55) 0%,
+    rgba(139, 203, 240, 0.75) 100%
+  );
+  transition: height 0.5s ease;
+}
+
+/* 水面波浪：两个旋转的圆形制造起伏 */
+.humidity-wave {
+  position: absolute;
+  left: 50%;
+  top: -404rpx;
+  width: 424rpx;
+  height: 424rpx;
+  margin-left: -212rpx;
+  border-radius: 44%;
+  background-color: rgba(255, 255, 255, 0.14);
+  animation: humidity-wave 7s linear infinite;
+}
+
+.wave-b {
+  top: -408rpx;
+  border-radius: 47%;
+  background-color: rgba(255, 255, 255, 0.08);
+  animation-duration: 11s;
+  animation-direction: reverse;
+}
+
+@keyframes humidity-wave {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+.humidity-content {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.humidity-left {
+  display: flex;
+  flex-direction: column;
+}
+
+.humidity-title {
+  font-size: 23rpx;
+  color: rgba(0, 0, 0, 0.5);
+}
+
+.humidity-value {
+  margin-top: 22rpx;
+  font-size: 56rpx;
+  font-weight: 700;
+  line-height: 1.05;
+  color: rgba(0, 0, 0, 0.88);
+}
+
+
+.humidity-right {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.humidity-gauge {
+  position: relative;
+  width: 132rpx;
+  height: 112rpx;
+  overflow: hidden;
+}
+
+.humidity-arc {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 132rpx;
+  height: 132rpx;
+  border-radius: 50%;
+  /* 只保留圆弧，圆内透明 */
+  -webkit-mask: radial-gradient(
+    circle at 50% 50%,
+    rgba(0, 0, 0, 0) 0,
+    rgba(0, 0, 0, 0) 52rpx,
+    #000 52rpx,
+    #000 100%
+  );
+  mask: radial-gradient(
+    circle at 50% 50%,
+    rgba(0, 0, 0, 0) 0,
+    rgba(0, 0, 0, 0) 52rpx,
+    #000 52rpx,
+    #000 100%
+  );
+}
+
+.humidity-hole {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 132rpx;
+  height: 132rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.humidity-drop {
+  width: 44rpx;
+  height: 44rpx;
+  transform: translateY(-10rpx);
+}
+
+.humidity-gauge-label {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 102rpx;
+  text-align: center;
+  font-size: 20rpx;
+  line-height: 20rpx;
+  color: rgba(0, 0, 0, 0.5);
 }
