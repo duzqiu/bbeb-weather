@@ -80,7 +80,7 @@ seed(32B) -> secretKey -> sign -> JWT -> Authorization: Bearer -> devapi.qweathe
 | `miniprogram/config.ts` | kid / projectId / seedBase64 / host |
 | `miniprogram/libs/nacl.min.js` | tweetnacl（已移除 crypto 依赖，小程序可直接用） |
 | `miniprogram/libs/jwt.ts` | 拼 JWT、签名、15 分钟缓存 |
-| `miniprogram/services/weather.ts` | 聚合实况 / 24 小时 / 7 天 / 空气质量 / 生活指数 |
+| `miniprogram/services/weather.ts` | 聚合实况 / 24 小时 / 10 天 / 空气质量 / 生活指数 |
 | `keys/` | 原始密钥对（已 gitignore，不进小程序包） |
 
 **必须配置域名**：小程序后台 → request 合法域名加 `https://devapi.qweather.com`

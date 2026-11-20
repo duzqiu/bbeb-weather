@@ -1,15 +1,28 @@
 // pages/mine/mine.ts
-const FALLBACK_VERSION = '0.0.1'
+import { syncTabBar } from '../../libs/tabbar'
+import { navMetrics } from '../../libs/nav'
+import { isPopupEnabled, setPopupEnabled } from '../../libs/settings'
+
+const FALLBACK_VERSION = '1.0.0'
+
+interface SwitchChangeEvent {
+  detail: { value: boolean }
+}
 
 Page({
   data: {
-    wxVersion: '-',
     cacheSize: '0 KB',
     appVersion: FALLBACK_VERSION,
+    statusBarHeight: 20,
+    navTotalHeight: 64,
+    privacyVisible: false,
+    dataSourceVisible: false,
+    popupEnabled: true,
   },
 
   onShow() {
-    const info = wx.getSystemInfoSync()
+    syncTabBar(this, 1)
+    this.setData(navMetrics())
 
     let appVersion = FALLBACK_VERSION
     try {
@@ -19,45 +32,47 @@ Page({
     }
 
     this.setData({
-      wxVersion: info.version || '-',
       cacheSize: `${wx.getStorageInfoSync().currentSize} KB`,
       appVersion,
+      popupEnabled: isPopupEnabled(),
     })
   },
 
   onClearCache() {
+    // 清缓存不该顺手把偏好设置清掉
+    const popupEnabled = isPopupEnabled()
     wx.clearStorageSync()
+    setPopupEnabled(popupEnabled)
     this.setData({ cacheSize: `${wx.getStorageInfoSync().currentSize} KB` })
     wx.showToast({ title: '缓存已清除', icon: 'none' })
   },
 
-  onPrivacy() {
-    wx.showModal({
-      title: '隐私说明',
-      content:
-        '本小程序仅在你使用定位功能时获取位置信息，用于确定所在区县并展示当地天气。\n\n位置信息不会上传至我们的服务器，仅在本地缓存（最长 12 小时）以减少重复请求；你可以通过「清除缓存」随时删除。\n\n天气数据由和风天气提供，地址解析由腾讯位置服务完成。',
-      showCancel: false,
-      confirmText: '知道了',
-    })
+  onPopupToggle(e: SwitchChangeEvent) {
+    const enabled = e.detail.value
+    setPopupEnabled(enabled)
+    this.setData({ popupEnabled: enabled })
   },
+
+  onPrivacy() {
+    this.setData({ privacyVisible: true })
+  },
+
+  onPrivacyClose() {
+    this.setData({ privacyVisible: false })
+  },
+
+  onCopyEmail() {
+    wx.setClipboardData({ data: 'duzqiu@outlook.com' })
+  },
+
+  noop() {},
 
   onDataSource() {
-    wx.showModal({
-      title: '数据来源',
-      content:
-        '天气数据：和风天气\n天气图标：QWeather Icons（CC BY 4.0）\n地址解析：腾讯位置服务\n\n数据仅供参考，请以当地气象部门发布的官方信息为准。',
-      showCancel: false,
-      confirmText: '知道了',
-    })
+    this.setData({ dataSourceVisible: true })
   },
 
-  onFeedback() {
-    wx.showModal({
-      title: '意见反馈',
-      content:
-        '可在小程序资料页点击「反馈与投诉」提交问题，或在小程序内长按截图后通过微信发送给我们。',
-      showCancel: false,
-      confirmText: '知道了',
-    })
+  onDataSourceClose() {
+    this.setData({ dataSourceVisible: false })
   },
+
 })

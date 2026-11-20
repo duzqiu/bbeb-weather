@@ -1,18 +1,12 @@
 /**index.wxss**/
 .page {
   min-height: 100vh;
-  padding: 16rpx 32rpx 64rpx;
+  padding: 16rpx 32rpx 150rpx;
+  padding-bottom: calc(150rpx + constant(safe-area-inset-bottom));
+  padding-bottom: calc(150rpx + env(safe-area-inset-bottom));
   display: flex;
   flex-direction: column;
-  background-color: #eef4fb;
-  background-image: linear-gradient(
-    165deg,
-    #cfe2fb 0%,
-    #e8f2ff 36%,
-    #f7f0ea 72%,
-    #fcefe6 100%
-  );
-  background-attachment: fixed;
+  background-color: #f5f6f8;
 }
 
 /* 卡片内的地点行 */
@@ -32,6 +26,7 @@
 
 .hero-place {
   max-width: 100%;
+  min-width: 0;
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
@@ -51,8 +46,16 @@
   align-items: center;
   flex-shrink: 0;
   margin-left: 16rpx;
+  padding: 10rpx 20rpx;
+  border-radius: 999rpx;
+  background-color: rgba(7, 193, 96, 0.10);
   font-size: 24rpx;
   color: #07c160;
+  transition: background-color 0.18s ease;
+}
+
+.location-action.is-pressed {
+  background-color: rgba(7, 193, 96, 0.24);
 }
 
 .action-text {
@@ -86,26 +89,10 @@
   color: rgba(0, 0, 0, 0.35);
 }
 
-/* 今日天气（白底卡片） */
+/* 今日天气：去掉卡片外壳，内容直接平铺 */
 .hero {
-  margin-top: 0;
-  padding: 36rpx 36rpx 32rpx;
-  border-radius: 32rpx;
-  background-color: rgba(255, 255, 255, 0.40);
-  background-image: linear-gradient(
-    140deg,
-    rgba(255, 255, 255, 0.62) 0%,
-    rgba(255, 255, 255, 0.16) 42%,
-    rgba(255, 255, 255, 0.08) 62%,
-    rgba(255, 255, 255, 0.46) 100%
-  );
-  -webkit-backdrop-filter: blur(48rpx) saturate(180%) brightness(1.06);
-  backdrop-filter: blur(48rpx) saturate(180%) brightness(1.06);
-  border: 1rpx solid rgba(255, 255, 255, 0.58);
-  box-shadow:
-    0 10rpx 40rpx rgba(23, 43, 77, 0.12),
-    0 1rpx 2rpx rgba(255, 255, 255, 0.65) inset,
-    0 -1rpx 2rpx rgba(255, 255, 255, 0.22) inset;
+  margin-top: 8rpx;
+  padding: 24rpx 8rpx 28rpx;
 }
 
 .hero-top {
@@ -172,17 +159,26 @@
   color: rgba(0, 0, 0, 0.55);
 }
 
-.hero-feel {
+/* 当前温度 + 右下角的体感温度 */
+.hero-temp {
   display: flex;
-  align-items: center;
-  font-size: 24rpx;
-  color: rgba(0, 0, 0, 0.55);
+  align-items: flex-end;
 }
 
-.temp-icon-feel {
-  width: 24rpx;
-  height: 24rpx;
-  margin: 0 4rpx 0 0;
+.hero-feel-icon {
+  width: 26rpx;
+  height: 26rpx;
+  margin-left: 10rpx;
+  margin-bottom: 14rpx;
+  flex-shrink: 0;
+}
+
+.hero-feel-inline {
+  margin-left: 6rpx;
+  margin-bottom: 12rpx;
+  font-size: 24rpx;
+  line-height: 1.2;
+  color: rgba(0, 0, 0, 0.55);
 }
 
 .temp-icon {
@@ -267,6 +263,149 @@
   font-size: 26rpx;
   font-weight: 500;
   color: rgba(0, 0, 0, 0.85);
+}
+
+/* 近 2 小时临近预报：与「降水概率」标题同一行 */
+.rain-now {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  min-width: 0;
+  padding: 0 12rpx;
+}
+
+.rain-now-icon {
+  width: 26rpx;
+  height: 26rpx;
+  margin-right: 8rpx;
+  flex-shrink: 0;
+}
+
+.rain-now-text {
+  font-size: 22rpx;
+  line-height: 1.35;
+  color: rgba(0, 0, 0, 0.68);
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+/* 24 小时降水概率卡片 */
+.rain-card {
+  padding: 24rpx 28rpx 20rpx;
+  border-radius: 28rpx;
+  background-color: rgba(255, 255, 255, 0.40);
+  background-image: linear-gradient(
+    140deg,
+    rgba(255, 255, 255, 0.62) 0%,
+    rgba(255, 255, 255, 0.16) 42%,
+    rgba(255, 255, 255, 0.08) 62%,
+    rgba(255, 255, 255, 0.46) 100%
+  );
+  -webkit-backdrop-filter: blur(48rpx) saturate(180%) brightness(1.06);
+  backdrop-filter: blur(48rpx) saturate(180%) brightness(1.06);
+  border: 1rpx solid rgba(255, 255, 255, 0.58);
+  box-shadow:
+    0 10rpx 40rpx rgba(23, 43, 77, 0.12),
+    0 1rpx 2rpx rgba(255, 255, 255, 0.65) inset;
+}
+
+.rain-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24rpx;
+}
+
+.rain-head-title {
+  flex-shrink: 0;
+  font-size: 22rpx;
+  letter-spacing: 1rpx;
+  color: rgba(0, 0, 0, 0.45);
+}
+
+.rain-head-peak {
+  flex-shrink: 0;
+  font-size: 22rpx;
+  color: rgba(0, 0, 0, 0.35);
+}
+
+/* 图表区域：左侧 Y 轴 + 右侧柱状图 */
+.rain-body {
+  display: flex;
+  align-items: flex-start;
+}
+
+.rain-yaxis {
+  position: relative;
+  width: 56rpx;
+  height: 168rpx;
+  margin-right: 10rpx;
+  flex-shrink: 0;
+}
+
+.rain-yaxis-label {
+  position: absolute;
+  left: 0;
+  right: 0;
+  transform: translateY(-50%);
+  text-align: left;
+  font-size: 18rpx;
+  line-height: 1;
+  color: rgba(0, 0, 0, 0.35);
+}
+
+.rain-plot {
+  flex: 1;
+  min-width: 0;
+}
+
+.rain-chart {
+  display: flex;
+  align-items: flex-end;
+  height: 168rpx;
+  border-bottom: 1rpx solid rgba(0, 0, 0, 0.06);
+  /* 每 50% 一条横向网格线，与三档刻度对齐 */
+  background-image: repeating-linear-gradient(
+    to top,
+    rgba(0, 0, 0, 0.05) 0,
+    rgba(0, 0, 0, 0.05) 1rpx,
+    rgba(0, 0, 0, 0) 1rpx,
+    rgba(0, 0, 0, 0) 50%
+  );
+}
+
+.rain-col {
+  flex: 1;
+  height: 100%;
+  display: flex;
+  align-items: flex-end;
+  margin-right: 4rpx;
+}
+
+.rain-col:last-child {
+  margin-right: 0;
+}
+
+.rain-col-fill {
+  width: 100%;
+  min-height: 4rpx;
+  border-radius: 4rpx 4rpx 0 0;
+  background-image: linear-gradient(180deg, #8fd0ff 0%, #4a9fe0 100%);
+}
+
+.rain-axis {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 8rpx;
+}
+
+.rain-axis-label {
+  font-size: 18rpx;
+  line-height: 1.2;
+  white-space: nowrap;
+  color: rgba(0, 0, 0, 0.4);
 }
 
 /* 7 天 */
@@ -447,7 +586,12 @@
   color: rgba(0, 0, 0, 0.3);
 }
 
-/* 骨架屏 */
+/* 骨架屏：首块对应无卡片的今日天气 */
+.sk-hero {
+  margin-bottom: 24rpx;
+  padding: 24rpx 8rpx 28rpx;
+}
+
 .sk-card {
   margin-bottom: 24rpx;
   padding: 36rpx;
@@ -584,7 +728,7 @@
 }
 
 .sun-card {
-  min-height: 218rpx;
+  min-height: 252rpx;
 }
 
 .sun-body {
@@ -610,8 +754,8 @@
 }
 
 .sun-icon {
-  width: 86rpx;
-  height: 86rpx;
+  width: 112rpx;
+  height: 112rpx;
   flex-shrink: 0;
 }
 
@@ -763,4 +907,283 @@
   font-size: 20rpx;
   line-height: 20rpx;
   color: rgba(0, 0, 0, 0.5);
+}
+
+/* ---------------- 液态玻璃弹窗 ---------------- */
+.glass-mask {
+  position: fixed;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  background-color: rgba(10, 16, 30, 0.42);
+  animation: glass-mask-in 240ms ease-out both;
+}
+
+/* 弹窗打开时，背后的天气页面整体模糊 */
+.page {
+  transition: filter 320ms ease;
+}
+
+.page.is-blurred {
+  filter: blur(16rpx) saturate(0.92) brightness(1.04);
+}
+
+/* 卡片内的流光：三团彩色云雾，缓慢呼吸放大 */
+.glass-aurora {
+  position: absolute;
+  left: -30%;
+  top: -30%;
+  width: 160%;
+  height: 160%;
+  background-image:
+    radial-gradient(
+      45% 35% at 30% 26%,
+      rgba(124, 198, 255, 0.60) 0%,
+      rgba(124, 198, 255, 0) 70%
+    ),
+    radial-gradient(
+      40% 32% at 72% 46%,
+      rgba(255, 182, 161, 0.48) 0%,
+      rgba(255, 182, 161, 0) 72%
+    ),
+    radial-gradient(
+      42% 34% at 46% 78%,
+      rgba(178, 160, 255, 0.52) 0%,
+      rgba(178, 160, 255, 0) 74%
+    );
+  background-size: 220% 220%;
+  animation: glass-aurora-flow 18s ease-in-out infinite alternate;
+}
+
+/* 斜向流动光带：从卡片左上外侧扫到右下外侧 */
+.glass-streak {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background-image: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0) 38%,
+    rgba(255, 255, 255, 0.38) 48%,
+    rgba(255, 255, 255, 0.52) 50%,
+    rgba(255, 255, 255, 0.38) 52%,
+    rgba(255, 255, 255, 0) 62%
+  );
+  animation: glass-streak-flow 4.5s linear infinite;
+}
+
+.glass-card {
+  position: relative;
+  z-index: 2;
+  width: 560rpx;
+  min-height: 640rpx;
+  padding: 44rpx 40rpx 36rpx;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border-radius: 44rpx;
+  background-color: rgba(255, 255, 255, 0.34);
+  background-image: linear-gradient(
+    155deg,
+    rgba(255, 255, 255, 0.72) 0%,
+    rgba(255, 255, 255, 0.20) 46%,
+    rgba(255, 255, 255, 0.46) 100%
+  );
+  -webkit-backdrop-filter: blur(60rpx) saturate(200%) brightness(1.10);
+  backdrop-filter: blur(60rpx) saturate(200%) brightness(1.10);
+  border: 1rpx solid rgba(255, 255, 255, 0.72);
+  box-shadow:
+    0 32rpx 90rpx rgba(12, 24, 48, 0.30),
+    0 2rpx 3rpx rgba(255, 255, 255, 0.85) inset,
+    0 -2rpx 6rpx rgba(255, 255, 255, 0.28) inset;
+  animation: glass-card-in 380ms cubic-bezier(0.22, 1.1, 0.36, 1) both;
+}
+
+/* 玻璃里的两团彩色液流，制造“液态”层次 */
+.glass-blob {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(46rpx);
+  opacity: 0.7;
+}
+
+.blob-one {
+  width: 340rpx;
+  height: 340rpx;
+  left: -110rpx;
+  top: -130rpx;
+  background-image: radial-gradient(
+    circle at 32% 32%,
+    rgba(124, 198, 255, 0.95) 0%,
+    rgba(124, 198, 255, 0) 70%
+  );
+  animation: glass-blob-a 9s ease-in-out infinite alternate;
+}
+
+.blob-two {
+  width: 300rpx;
+  height: 300rpx;
+  right: -120rpx;
+  bottom: -150rpx;
+  background-image: radial-gradient(
+    circle at 62% 40%,
+    rgba(255, 182, 161, 0.90) 0%,
+    rgba(195, 168, 255, 0) 72%
+  );
+  animation: glass-blob-b 11s ease-in-out infinite alternate;
+}
+
+.glass-content {
+  position: relative;
+  z-index: 2;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+}
+
+/* 地点固定在左上角 */
+.glass-loc {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  width: 100%;
+  min-width: 0;
+}
+
+.glass-loc-icon {
+  width: 28rpx;
+  height: 28rpx;
+  margin-right: 8rpx;
+  flex-shrink: 0;
+}
+
+.glass-place {
+  flex: 1;
+  min-width: 0;
+  font-size: 26rpx;
+  color: rgba(18, 26, 42, 0.62);
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.glass-main {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8rpx 0;
+}
+
+.glass-temp {
+  font-size: 128rpx;
+  font-weight: 200;
+  line-height: 1;
+  letter-spacing: -4rpx;
+  color: rgba(10, 18, 34, 0.90);
+}
+
+.glass-weather-icon {
+  width: 96rpx;
+  height: 96rpx;
+  margin-left: 16rpx;
+}
+
+.glass-weather-glyph {
+  margin-left: 16rpx;
+  font-size: 80rpx;
+  line-height: 1;
+}
+
+.glass-desc-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+}
+
+.glass-desc {
+  font-size: 52rpx;
+  font-weight: 500;
+  line-height: 1.2;
+  color: rgba(16, 24, 40, 0.85);
+}
+
+.glass-feel {
+  margin-left: 16rpx;
+  font-size: 36rpx;
+  color: rgba(16, 24, 40, 0.56);
+}
+
+.glass-tip {
+  margin-top: 28rpx;
+  text-align: center;
+  font-size: 20rpx;
+  letter-spacing: 1rpx;
+  color: rgba(16, 24, 40, 0.34);
+}
+
+@keyframes glass-mask-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes glass-card-in {
+  from {
+    opacity: 0;
+    transform: scale(0.86) translateY(24rpx);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+@keyframes glass-blob-a {
+  from {
+    transform: translate(0, 0) scale(1);
+  }
+  to {
+    transform: translate(40rpx, 30rpx) scale(1.15);
+  }
+}
+
+@keyframes glass-blob-b {
+  from {
+    transform: translate(0, 0) scale(1.10);
+  }
+  to {
+    transform: translate(-32rpx, -26rpx) scale(1);
+  }
+}
+
+/* 光带：起点终点都在卡片外，循环无缝且单向 */
+@keyframes glass-streak-flow {
+  from {
+    transform: translate3d(-115%, -115%, 0);
+  }
+  to {
+    transform: translate3d(115%, 115%, 0);
+  }
+}
+
+/* 彩雾只做缓慢呼吸放大，负责颜色层次 */
+@keyframes glass-aurora-flow {
+  from {
+    transform: translate3d(-2%, -2%, 0) scale(1);
+  }
+  to {
+    transform: translate3d(2%, 2%, 0) scale(1.08);
+  }
 }

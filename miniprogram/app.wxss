@@ -15,6 +15,7 @@
 }
 
 /**app.wxss**/
+
 page {
   background-color: #f5f6f8;
   color: rgba(0, 0, 0, 0.9);

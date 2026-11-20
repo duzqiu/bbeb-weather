@@ -3,11 +3,28 @@ import { QQ_MAP_KEY } from '../../config'
 import { fetchWeather, WeatherPayload } from '../../services/weather'
 import { glyphOf } from '../../libs/qweather-glyphs'
 import { iconColorOf, iconImageOf } from '../../services/weather'
+import { syncTabBar } from '../../libs/tabbar'
+import { navMetrics } from '../../libs/nav'
+import { isPopupEnabled } from '../../libs/settings'
 
 interface HourlyRaw {
   time: string
   iconCode: string
   temp: number
+  pop: number
+}
+
+/** 24 小时降水概率图的一根柱子 */
+interface RainPoint {
+  key: number
+  /** 相对 Y 轴上限的高度百分比 */
+  h: number
+}
+
+/** X 轴时间标签（由 flex 均分，天然等距） */
+interface RainAxisLabel {
+  key: number
+  label: string
 }
 
 interface Hourly extends HourlyRaw {
@@ -65,18 +82,21 @@ interface CachedLocation {
 const LOCATION_KEY = 'weather_location_v2'
 const CACHE_TTL = 12 * 60 * 60 * 1000 // 12 小时内不重复请求
 const WEATHER_KEY = 'weather_snapshot'
-const WEATHER_CACHE_VERSION = 13 // 图标/字段结构变化时 +1，旧缓存自动失效
+const WEATHER_CACHE_VERSION = 16 // 图标/字段结构变化时 +1，旧缓存自动失效
 const WEATHER_TTL = 10 * 60 * 1000 // 天气数据 10 分钟内复用
 
+/** 本轮进入页面是否还欠一次弹窗（有地点且天气就绪时消费掉） */
+let glassPending = false
+
 const HOURLY_RAW: HourlyRaw[] = [
-  { time: '现在', iconCode: '100', temp: 26 },
-  { time: '14时', iconCode: '100', temp: 27 },
-  { time: '15时', iconCode: '100', temp: 28 },
-  { time: '16时', iconCode: '101', temp: 27 },
-  { time: '17时', iconCode: '101', temp: 25 },
-  { time: '18时', iconCode: '103', temp: 23 },
-  { time: '19时', iconCode: '150', temp: 22 },
-  { time: '20时', iconCode: '150', temp: 21 },
+  { time: '现在', iconCode: '100', temp: 26, pop: 0 },
+  { time: '14时', iconCode: '100', temp: 27, pop: 0 },
+  { time: '15时', iconCode: '100', temp: 28, pop: 5 },
+  { time: '16时', iconCode: '101', temp: 27, pop: 10 },
+  { time: '17时', iconCode: '101', temp: 25, pop: 20 },
+  { time: '18时', iconCode: '103', temp: 23, pop: 35 },
+  { time: '19时', iconCode: '150', temp: 22, pop: 20 },
+  { time: '20时', iconCode: '150', temp: 21, pop: 10 },
 ]
 
 /** 静态兜底数据用当天起算的日期 */
@@ -96,6 +116,9 @@ const DAILY_RAW: DailyRaw[] = [
   { day: '周五', date: demoDate(4), iconCode: '104', desc: '阴', low: 20, high: 23 },
   { day: '周六', date: demoDate(5), iconCode: '100', desc: '晴', low: 19, high: 26 },
   { day: '周日', date: demoDate(6), iconCode: '103', desc: '晴转多云', low: 22, high: 28 },
+  { day: '周一', date: demoDate(7), iconCode: '101', desc: '多云', low: 21, high: 27 },
+  { day: '周二', date: demoDate(8), iconCode: '305', desc: '小雨', low: 18, high: 23 },
+  { day: '周三', date: demoDate(9), iconCode: '100', desc: '晴', low: 17, high: 25 },
 ]
 
 const INDICES: WeatherIndex[] = [
@@ -292,6 +315,20 @@ Page({
     updatedAt: '--',
     notice: '数据加载中…',
     loading: true,
+    glassVisible: false,
+    hasWeather: false,
+
+    rainVisible: false,
+    rainSummary: '',
+    rainHasRain: false,
+    rainBars: [] as Array<{ key: number; h: number }>,
+    rainPoints: [] as RainPoint[],
+    rainTicks: [] as Array<{ key: number; label: number; top: number }>,
+    rainAxis: [] as RainAxisLabel[],
+    rainPeak: 0,
+
+    statusBarHeight: 20,
+    navTotalHeight: 64,
 
     hourly: HOURLY_VIEW,
     daily: DAILY,
@@ -299,10 +336,12 @@ Page({
   },
 
   onLoad() {
+    glassPending = isPopupEnabled()
+    this.initNavMetrics()
     wx.showShareMenu({ menus: ['shareAppMessage', 'shareTimeline'] })
 
     if (!QQ_MAP_KEY) {
-      this.setData({ hint: '未配置地图 Key，点击地点可手动选择区县', loading: false })
+      this.setData({ hint: '未配置地图 Key，点击「重新定位」可手动选择区县', loading: false })
       return
     }
 
@@ -322,6 +361,17 @@ Page({
     }
 
     this.locate()
+  },
+
+  /** 自定义导航栏：状态栏 + 胶囊按钮那一行的高度 */
+  initNavMetrics() {
+    this.setData(navMetrics())
+  },
+
+  onShow() {
+    syncTabBar(this, 0)
+    // 只在 onLoad（冷启动）时给过弹窗机会，切 tab 回来不会再弹
+    this.maybeShowGlass()
   },
 
   /* ---------------- 定位 ---------------- */
@@ -361,10 +411,10 @@ Page({
       locating: false,
       loading: false,
       hint: denied
-        ? '位置权限已关闭，点击地点可手动选择区县'
+        ? '位置权限已关闭，点击「重新定位」可手动选择区县'
         : notOpen
           ? '定位接口未开通：后台「接口设置」里开通后即可自动定位'
-          : '定位未成功，点击地点可手动选择区县',
+          : '定位未成功，点击「重新定位」可手动选择区县',
     })
 
     if (denied) {
@@ -405,7 +455,7 @@ Page({
           this.setData({
             locating: false,
             loading: false,
-            hint: '定位失败，点击地点可手动选择区县',
+            hint: '定位失败，点击「重新定位」可手动选择区县',
           })
           console.warn('[geo] reverse geocode failed:', body.status, body.message)
           if (showFeedback) {
@@ -435,7 +485,7 @@ Page({
           loading: false,
           hint: notWhitelisted
             ? '域名未配置：后台把 https://apis.map.qq.com 加入 request 合法域名'
-            : '网络异常，点击地点可手动选择区县',
+            : '网络异常，点击「重新定位」可手动选择区县',
         })
         if (showFeedback) {
           wx.showToast({
@@ -493,7 +543,7 @@ Page({
     const lng = this.data.lng
     if (!lat || !lng) {
       console.warn('[weather] 没有定位坐标，跳过请求（点一下地点可重新定位）')
-      this.setData({ loading: false, notice: '点击上方地点可切换城市' })
+      this.setData({ loading: false, notice: '点击「重新定位」可切换城市' })
       return Promise.resolve()
     }
     console.log('[weather] request', lng, lat)
@@ -545,6 +595,28 @@ Page({
       barWidth: Math.max(6, Math.round(((d.high - d.low) / span) * 100)),
     }))
 
+    // 24 小时降水概率：Y 轴上限按实际峰值动态取整，让起伏更明显
+    const pops = hourly.map((h) => Math.min(100, Math.max(0, Number(h.pop) || 0)))
+    const rainPeak = pops.reduce((max, value) => Math.max(max, value), 0)
+    const yMax = Math.max(20, Math.ceil(rainPeak / 20) * 20)
+    const rainPoints: RainPoint[] = hourly.map((h, index) => ({
+      key: index,
+      h: Math.round((pops[index] / yMax) * 100),
+    }))
+
+    // X 轴：每 3 小时一个时间点，由 flex 均分保证等距
+    const axisIndexes = [0, 3, 6, 9, 12, 15, 18, 21, 23].filter((index) => !!hourly[index])
+    const rainAxis: RainAxisLabel[] = axisIndexes.map((index) => ({
+      key: index,
+      label: index === 0 ? '现在' : `${hourly[index].time.slice(0, 2)}时`,
+    }))
+    // 刻度带 top 值，渲染时用 translateY(-50%) 让文字中心正对网格线；只保留上中下三档
+    const rainTicks = [1, 0.5, 0].map((ratio, index) => ({
+      key: index,
+      label: Math.round(yMax * ratio),
+      top: Math.round((1 - ratio) * 100),
+    }))
+
     this.setData({
       temp: payload.now.temp,
       desc: payload.now.text,
@@ -577,9 +649,40 @@ Page({
       })),
       updatedAt: updateTimeOf(payload.updateTime) || '--',
       loading: false,
+      hasWeather: true,
+      rainVisible: !!payload.minutely && !!payload.minutely.summary,
+      rainSummary: payload.minutely ? payload.minutely.summary : '',
+      rainHasRain: !!payload.minutely && payload.minutely.hasRain,
+      rainBars: payload.minutely ? payload.minutely.bars : [],
+      rainPoints,
+      rainTicks,
+      rainAxis,
+      rainPeak,
       notice: '数据来源：和风天气',
     })
+
+    // 天气就绪后，补弹本轮欠下的弹窗
+    this.maybeShowGlass()
   },
+
+  /* ---------------- 液态玻璃弹窗 ---------------- */
+
+  /** 有地点且天气就绪才弹；无地点 / 无数据直接跳过 */
+  maybeShowGlass() {
+    if (!glassPending) return
+    const { lat, lng, place, hasWeather } = this.data
+    if (!lat || !lng || !place || !hasWeather) return
+    glassPending = false
+    this.setData({ glassVisible: true })
+  },
+
+  onGlassClose() {
+    glassPending = false
+    this.setData({ glassVisible: false })
+  },
+
+  /** 拦住卡片内部与遮罩上的冒泡/滚动 */
+  noop() {},
 
   readWeatherCache(): WeatherPayload | null {
     const raw = wx.getStorageSync(WEATHER_KEY) as unknown as
@@ -633,7 +736,7 @@ Page({
 
   onShareAppMessage() {
     return {
-      title: '灞波儿奔天气 · 实时天气与 7 天预报',
+      title: '灞波儿奔天气 · 实时天气与 10 天预报',
       path: '/pages/index/index',
       imageUrl: '/images/share-cover.png',
     }
@@ -641,7 +744,7 @@ Page({
 
   onShareTimeline() {
     return {
-      title: '灞波儿奔天气 · 实时天气与 7 天预报',
+      title: '灞波儿奔天气 · 实时天气与 10 天预报',
       imageUrl: '/images/share-cover.png',
     }
   },

@@ -1,8 +1,9 @@
 <!--pages/index/index.wxml-->
-<view class="page">
+<!-- 顶部不做任何蒙层：内容直接展示，只用 padding 避开状态栏 -->
+<view class="page {{glassVisible ? 'is-blurred' : ''}}" style="padding-top: {{navTotalHeight - 20}}px;">
   <!-- 骨架屏 -->
   <block wx:if="{{loading}}">
-    <view class="sk-card">
+    <view class="sk-hero">
       <view class="sk sk-bar" style="width: 35%;"></view>
       <view class="sk sk-temp"></view>
       <view class="sk sk-bar" style="width: 55%; margin-top: 26rpx;"></view>
@@ -31,11 +32,16 @@
   <block wx:else>
     <!-- 今日天气（地点在卡片内） -->
     <view class="hero">
-      <view class="hero-top" bindtap="onLocateTap">
+      <view class="hero-top">
         <view class="hero-location">
           <image class="place-icon" src="/images/icons/location.svg" mode="aspectFit"></image>
           <text class="hero-place {{locating ? 'is-busy' : ''}}">{{place}}</text>
-          <view class="location-action">
+          <view
+            class="location-action"
+            hover-class="is-pressed"
+            hover-stay-time="80"
+            bindtap="onLocateTap"
+          >
             <view wx:if="{{locating}}" class="spinner"></view>
             <text class="action-text">{{locating ? '定位中' : '重新定位'}}</text>
           </view>
@@ -45,7 +51,15 @@
       <text class="location-hint" wx:if="{{hint}}">{{hint}}</text>
 
       <view class="hero-main">
-        <text class="temp">{{temp}}°</text>
+        <view class="hero-temp">
+          <text class="temp">{{temp}}°</text>
+          <image
+            class="hero-feel-icon"
+            src="/images/icons/temp-now.svg"
+            mode="aspectFit"
+          ></image>
+          <text class="hero-feel-inline">体感 {{feel}}°</text>
+        </view>
         <view class="hero-right">
           <image wx:if="{{image}}" class="hero-icon-img" src="{{image}}" mode="aspectFit"></image>
           <text wx:else class="qi hero-icon" style="color: {{color}};">{{glyph}}</text>
@@ -59,10 +73,6 @@
           <text>最高 {{high}}° · </text>
           <image class="temp-icon" src="/images/icons/thermometer.svg" mode="aspectFit"></image>
           <text>最低 {{low}}°</text>
-        </view>
-        <view class="hero-feel">
-          <image class="temp-icon temp-icon-feel" src="/images/icons/temp-now.svg" mode="aspectFit"></image>
-          <text>体感 {{feel}}°</text>
         </view>
       </view>
     </view>
@@ -124,6 +134,51 @@
       </view>
     </view>
 
+    <!-- 24 小时降水：卡片标题行左侧为「降水概率」，中间为近 2 小时临近预报，右侧为峰值 -->
+    <view class="section" wx:if="{{rainPoints.length > 0}}">
+      <text class="section-title">24小时降水</text>
+
+      <!-- 24 小时降水概率：X 轴为时间 -->
+      <view class="rain-card">
+        <view class="rain-head">
+          <text class="rain-head-title">降水概率</text>
+
+          <!-- 近 2 小时临近预报：与标题同一行、居中 -->
+          <view class="rain-now" wx:if="{{rainVisible}}">
+            <image class="rain-now-icon" src="/images/weather/rain-light.svg" mode="aspectFit"></image>
+            <text class="rain-now-text">{{rainSummary}}</text>
+          </view>
+
+          <text class="rain-head-peak">最高 {{rainPeak}}%</text>
+        </view>
+
+        <view class="rain-body">
+          <!-- Y 轴：百分比刻度随峰值变化 -->
+          <view class="rain-yaxis">
+            <text
+              class="rain-yaxis-label"
+              wx:for="{{rainTicks}}"
+              wx:key="key"
+              style="top: {{item.top}}%;"
+            >{{item.label}}%</text>
+          </view>
+
+          <view class="rain-plot">
+            <view class="rain-chart">
+              <view class="rain-col" wx:for="{{rainPoints}}" wx:key="key">
+                <view class="rain-col-fill" style="height: {{item.h}}%;"></view>
+              </view>
+            </view>
+
+            <!-- X 轴：flex 均分，等距分布，首尾贴边 -->
+            <view class="rain-axis">
+              <text class="rain-axis-label" wx:for="{{rainAxis}}" wx:key="key">{{item.label}}</text>
+            </view>
+          </view>
+        </view>
+      </view>
+    </view>
+
     <!-- 24 小时 -->
     <view class="section">
       <text class="section-title">24小时预报</text>
@@ -137,11 +192,11 @@
       </scroll-view>
     </view>
 
-    <!-- 7 天 -->
+    <!-- 10 天 -->
     <view class="section">
-      <text class="section-title">7日预报</text>
+      <text class="section-title">10日预报</text>
       <view class="daily">
-        <view class="day" wx:for="{{daily}}" wx:key="day">
+        <view class="day" wx:for="{{daily}}" wx:key="date">
           <view class="day-date">
             <text class="day-name">{{item.day}}</text>
             <text class="day-sub">{{item.date}}</text>
@@ -177,4 +232,43 @@
   </block>
 
   <text class="data-note">{{notice}}</text>
+</view>
+
+<!-- 液态玻璃卡片：每次进入弹一次，点空白处关闭 -->
+<view
+  wx:if="{{glassVisible}}"
+  class="glass-mask"
+  bindtap="onGlassClose"
+  catchtouchmove="noop"
+>
+  <view class="glass-card" catchtap="noop">
+    <view class="glass-aurora"></view>
+    <view class="glass-streak"></view>
+    <view class="glass-blob blob-one"></view>
+    <view class="glass-blob blob-two"></view>
+
+    <view class="glass-content">
+      <view class="glass-loc">
+        <image class="glass-loc-icon" src="/images/icons/location.svg" mode="aspectFit"></image>
+        <text class="glass-place">{{place}}</text>
+      </view>
+
+      <view class="glass-main">
+        <text class="glass-temp">{{temp}}°</text>
+        <image
+          wx:if="{{image}}"
+          class="glass-weather-icon"
+          src="{{image}}"
+          mode="aspectFit"
+        ></image>
+        <text wx:else class="qi glass-weather-glyph" style="color: {{color}};">{{glyph}}</text>
+      </view>
+
+      <view class="glass-desc-row">
+        <text class="glass-desc">{{desc}}</text>
+        <text class="glass-feel">体感 {{feel}}°</text>
+      </view>
+      <text class="glass-tip">轻触空白处关闭</text>
+    </view>
+  </view>
 </view>

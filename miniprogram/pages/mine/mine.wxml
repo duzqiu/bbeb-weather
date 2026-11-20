@@ -1,28 +1,19 @@
 <!--pages/mine/mine.wxml-->
-<view class="page">
+<!-- 与天气页一致：顶部不做蒙层，只用 padding 避开状态栏 -->
+<view class="page" style="padding-top: {{navTotalHeight - 20}}px;">
+  <text class="page-title">我的</text>
+
   <view class="card">
     <view class="row">
-      <text class="label">微信版本</text>
-      <text class="value">{{wxVersion}}</text>
+      <text class="label">首页弹窗</text>
+      <switch
+        class="row-switch"
+        checked="{{popupEnabled}}"
+        color="#07c160"
+        bindchange="onPopupToggle"
+      />
     </view>
 
-    <view class="row">
-      <text class="label">缓存占用</text>
-      <text class="value">{{cacheSize}}</text>
-    </view>
-
-    <view class="row" bindtap="onClearCache">
-      <text class="label">清除缓存</text>
-      <text class="arrow">›</text>
-    </view>
-
-    <view class="row row-last">
-      <text class="label">小程序版本</text>
-      <text class="value">v{{appVersion}}</text>
-    </view>
-  </view>
-
-  <view class="card card-second">
     <view class="row" bindtap="onPrivacy">
       <text class="label">隐私说明</text>
       <text class="arrow">›</text>
@@ -33,9 +24,73 @@
       <text class="arrow">›</text>
     </view>
 
-    <view class="row row-last" bindtap="onFeedback">
+    <view class="row row-tap">
       <text class="label">意见反馈</text>
       <text class="arrow">›</text>
+      <!-- 透明按钮铺满整行，用 open-type="feedback" 打开微信内置反馈页 -->
+      <button class="row-hit" open-type="feedback"></button>
     </view>
+
+    <view class="row" bindtap="onClearCache">
+      <text class="label">清除缓存</text>
+      <view class="row-tail">
+        <text class="value">{{cacheSize}}</text>
+        <text class="arrow">›</text>
+      </view>
+    </view>
+
+    <view class="row row-last">
+      <text class="label">小程序版本</text>
+      <text class="value">{{appVersion}}</text>
+    </view>
+  </view>
+</view>
+
+<!-- 隐私说明弹窗：内容左对齐，标题分项加粗 -->
+<view
+  wx:if="{{privacyVisible}}"
+  class="modal-mask"
+  bindtap="onPrivacyClose"
+  catchtouchmove="noop"
+>
+  <view class="modal-card" catchtap="noop">
+    <text class="modal-title">隐私说明</text>
+
+    <view class="modal-body">
+      <text class="modal-h">1. 信息收集</text>
+      <text class="modal-p">仅在你使用定位功能时获取位置信息，用于确定所在区县并展示当地天气；不收集昵称、头像、手机号等个人身份信息。</text>
+
+      <text class="modal-h">2. 存储与保留</text>
+      <text class="modal-p">位置信息不会上传至我们的服务器，仅缓存于本机（最长 12 小时）以减少重复请求；你可在「清除缓存」中随时删除。</text>
+
+      <text class="modal-h">3. 第三方服务</text>
+      <text class="modal-p">定位解析：腾讯位置服务；天气数据：和风天气。</text>
+
+      <text class="modal-h">4. 联系我们</text>
+      <text class="modal-p">如认为本小程序的内容侵犯了您的权益，请通过下方邮箱联系作者，核实后我们会尽快处理。</text>
+      <text class="modal-mail" bindtap="onCopyEmail">duzqiu@outlook.com</text>
+    </view>
+
+    <view class="modal-btn" bindtap="onPrivacyClose">知道了</view>
+  </view>
+</view>
+
+<!-- 数据来源弹窗：与隐私说明共用标题样式 -->
+<view
+  wx:if="{{dataSourceVisible}}"
+  class="modal-mask"
+  bindtap="onDataSourceClose"
+  catchtouchmove="noop"
+>
+  <view class="modal-card" catchtap="noop">
+    <text class="modal-title">数据来源</text>
+
+    <view class="modal-body">
+      <text class="modal-p">天气数据：和风天气</text>
+      <text class="modal-p">地址解析：腾讯位置服务</text>
+      <text class="modal-note">数据仅供参考，请以当地气象部门发布的官方信息为准。</text>
+    </view>
+
+    <view class="modal-btn" bindtap="onDataSourceClose">知道了</view>
   </view>
 </view>

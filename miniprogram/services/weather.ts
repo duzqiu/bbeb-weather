@@ -1,5 +1,5 @@
 // services/weather.ts
-// 和风天气：一次定位坐标，聚合实况 / 24 小时 / 7 天 / 空气质量 / 生活指数。
+// 和风天气：一次定位坐标，聚合实况 / 24 小时 / 10 天 / 空气质量 / 生活指数。
 import { authorizationHeader } from '../libs/jwt'
 import { QWEATHER } from '../config'
 import { glyphOf } from '../libs/qweather-glyphs'
@@ -25,6 +25,8 @@ export interface WeatherHour {
   color: string
   image: string
   temp: number
+  /** 降水概率 0~100 */
+  pop: number
 }
 
 export interface WeatherDay {
@@ -46,6 +48,14 @@ export interface WeatherIndex {
   tip: string
 }
 
+/** 分钟级降水（未来 2 小时，仅中国地区；取不到时为 null） */
+export interface MinutelyRain {
+  summary: string
+  hasRain: boolean
+  /** 每 5 分钟一个点，h 为归一化到 0~100 的柱高 */
+  bars: Array<{ key: number; h: number }>
+}
+
 export interface WeatherPayload {
   now: WeatherNow
   today: { low: number; high: number }
@@ -54,6 +64,7 @@ export interface WeatherPayload {
   indices: WeatherIndex[]
   air: { aqi: number; category: string }
   sun: { sunrise: string; sunset: string }
+  minutely: MinutelyRain | null
   updateTime: string
 }
 
@@ -63,6 +74,12 @@ interface QwResponse {
   daily?: Record<string, string>[]
   hourly?: Record<string, string>[]
   updateTime?: string
+}
+
+interface MinutelyResponse {
+  code: string
+  summary?: string
+  minutely?: Array<{ fxTime?: string; precip?: string; type?: string }>
 }
 
 /** 不同天气给不同颜色，让单色字体图标也有色彩感 */
@@ -214,6 +231,52 @@ function dayLabel(fxDate: string, index: number): string {
   return isNaN(parsed.getTime()) ? `第${index + 1}天` : WEEK[parsed.getDay()]
 }
 
+/** 10 天预报；订阅里没开 10 天时自动降级到 7 天，避免整页失败 */
+function requestDaily(location: string): Promise<QwResponse> {
+  return request('/v7/weather/10d', { location }).catch((err: Error) => {
+    console.warn('[weather] 10 天预报不可用，降级到 7 天：', err.message)
+    return request('/v7/weather/7d', { location })
+  })
+}
+
+/** 分钟级降水（未来 2 小时，仅中国地区）；任何失败都返回 null，不影响整页 */
+function requestMinutely(location: string): Promise<MinutelyRain | null> {
+  return new Promise((resolve) => {
+    wx.request({
+      url: QWEATHER.host + '/v7/minutely/5m',
+      data: { location },
+      header: {
+        Authorization: authorizationHeader(),
+        'Accept-Encoding': 'gzip',
+      },
+      timeout: 8000,
+      success: (res) => {
+        const body = res.data as MinutelyResponse
+        if (res.statusCode !== 200 || !body || body.code !== '200') {
+          console.warn('[weather] 分钟级降水不可用：', res.statusCode, body && body.code)
+          resolve(null)
+          return
+        }
+        const list = body.minutely || []
+        const values = list.map((item) => Number(item.precip) || 0)
+        const peak = values.length ? Math.max(...values) : 0
+        resolve({
+          summary: body.summary || (peak > 0 ? '未来两小时有降水' : '未来两小时无降水'),
+          hasRain: peak > 0,
+          bars: values.map((value, index) => ({
+            key: index,
+            h: peak > 0 ? Math.max(4, Math.round((value / peak) * 100)) : 0,
+          })),
+        })
+      },
+      fail: (err) => {
+        console.warn('[weather] 分钟级降水请求失败：', err.errMsg)
+        resolve(null)
+      },
+    })
+  })
+}
+
 /** 按经纬度查询（和风支持 location=经度,纬度） */
 export function fetchWeather(longitude: number, latitude: number): Promise<WeatherPayload> {
   const location = `${longitude.toFixed(2)},${latitude.toFixed(2)}`
@@ -221,10 +284,11 @@ export function fetchWeather(longitude: number, latitude: number): Promise<Weath
   return Promise.all([
     request('/v7/weather/now', { location }),
     request('/v7/weather/24h', { location }),
-    request('/v7/weather/7d', { location }),
+    requestDaily(location),
     request('/v7/air/now', { location }),
     request('/v7/indices/1d', { location, type: '0' }),
-  ]).then(([nowRes, hourRes, dayRes, airRes, indexRes]) => {
+    requestMinutely(location),
+  ]).then(([nowRes, hourRes, dayRes, airRes, indexRes, minutely]) => {
     const nowBlock = nowRes.now || {}
     const hourList = hourRes.hourly || []
     const dayList = dayRes.daily || []
@@ -239,6 +303,7 @@ export function fetchWeather(longitude: number, latitude: number): Promise<Weath
       color: iconColorOf(item.icon || '100'),
       image: iconImageOf(item.icon || '100'),
       temp: Math.round(Number(item.temp) || 0),
+      pop: Math.min(100, Math.max(0, Math.round(Number(item.pop) || 0))),
     }))
 
     const daily = dayList.map((item, index) => ({
@@ -295,6 +360,7 @@ export function fetchWeather(longitude: number, latitude: number): Promise<Weath
         sunrise: (dayList[0] && dayList[0].sunrise) || '',
         sunset: (dayList[0] && dayList[0].sunset) || '',
       },
+      minutely,
       updateTime: nowRes.updateTime || '',
     }
   })
